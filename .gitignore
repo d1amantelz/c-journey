@@ -1,0 +1,16 @@
+# Compiled binaries
+main
+*.o
+*.out
+*.exe
+
+# Old raw scratch folder
+studying/
+
+# VS Code directory (optional, keeping repo clean)
+.vscode/
+
+# OS and temporary files
+.DS_Store
+*.tmp
+*.swp
