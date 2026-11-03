@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <stdarg.h>
 
-#define MAX_LENGTH_NAME 32
+#define MAX_LENGTH_NAME 96
 #define MAX_DESC_LEN 512
 #define MAX_EXITS 4
 #define MAX_ACTIONS 5
@@ -24,11 +24,12 @@ typedef enum
     ACT_SHOP_ADVICE,
     ACT_SHOP_BUY,
     ACT_REST_FIRE,
+    ACT_SHORE_CHEST,
 } ActionId;
 
 typedef struct
 {
-    char name[48];
+    char name[MAX_LENGTH_NAME];
     ActionId actionId;
 } Action;
 
@@ -61,11 +62,11 @@ typedef struct
 typedef struct
 {
     LocationId id;
-    char name[64];
+    char name[MAX_LENGTH_NAME];
     char description[MAX_DESC_LEN];
 
-    LocationId exits[MAX_EXITS]; // массив путей локации куда можно пойти
-    int exitsCount;              // кол-во путей
+    LocationId exits[MAX_EXITS];
+    int exitsCount;
 
     Action actions[MAX_ACTIONS];
     int actionsCount;
@@ -101,6 +102,10 @@ void removeFromInventory(Inventory *inventory, int index);
 void openInventory(Player *player);
 
 void useItem(Player *player, int index);
+
+void openShop(Player *player);
+
+void openShoreChest(Player *player);
 
 int main()
 {
@@ -262,7 +267,7 @@ void openInventory(Player *player)
     typePrintf(25, "\n1. Использовать\n2. Назад\n> ");
 
     int choice = getInt();
-    
+
     if (choice == 2)
     {
         printf("\n");
@@ -297,7 +302,7 @@ void useItem(Player *player, int index)
 
         if (item.hp > 0 && player->hp >= player->max_hp)
         {
-            typePrintf(25, "\nВаше здоровье уже максимальное: %d / %d\n", player->hp, player->max_hp);
+            typePrintf(25, "\nВаше здоровье уже максимальное: %d / %d\n\n", player->hp, player->max_hp);
             return;
         }
 
@@ -367,7 +372,9 @@ void initWorld(Location world[])
            "В стороне виден дым из труб и огонь костров. Видимо, это Деревня...");
     world[LOC_SHORE].exitsCount = 1;
     world[LOC_SHORE].exits[0] = LOC_VILLAGE;
-    world[LOC_SHORE].actionsCount = 0;
+    world[LOC_SHORE].actionsCount = 1;
+    strcpy(world[LOC_SHORE].actions[0].name, "Осмотреть выброшенный сундук");
+    world[LOC_SHORE].actions[0].actionId = ACT_SHORE_CHEST;
 
     // Локация: Деревня Угли
     world[LOC_VILLAGE].id = LOC_VILLAGE;
@@ -394,9 +401,11 @@ void initWorld(Location world[])
     world[LOC_SHOP].exits[0] = LOC_VILLAGE;
 
     // Действия для локации: Лавка торговца
-    world[LOC_SHOP].actionsCount = 1;
+    world[LOC_SHOP].actionsCount = 2;
     strcpy(world[LOC_SHOP].actions[0].name, "Попросить совета");
+    strcpy(world[LOC_SHOP].actions[1].name, "Посмотреть товары");
     world[LOC_SHOP].actions[0].actionId = ACT_SHOP_ADVICE;
+    world[LOC_SHOP].actions[1].actionId = ACT_SHOP_BUY;
 }
 
 int getInt()
@@ -438,6 +447,12 @@ void handleAction(Player *player, ActionId act)
         typePrintf(20, "\nВы греетесь у костра. Тепло разливается по телу (+5 HP).\n\n");
         player->hp = (player->hp + 5 > player->max_hp) ? player->max_hp : player->hp + 5;
         break;
+    case ACT_SHOP_BUY:
+        openShop(player);
+        break;
+    case ACT_SHORE_CHEST:
+        openShoreChest(player);
+        break;
     default:
         break;
     }
@@ -463,7 +478,7 @@ void typePrintf(int delayMs, const char *format, ...)
     vsnprintf(buffer, sizeof(buffer), format, args);
     va_end(args);
 
-    typePrint(buffer, delayMs);
+    typePrint(buffer, 1);
 }
 
 void sleepMs(int ms)
@@ -484,6 +499,109 @@ void removeFromInventory(Inventory *inventory, int index)
     }
 
     inventory->numItems--;
+}
+
+void openShop(Player *player)
+{
+    // предметы для торговли. id, name, attack, hp, cost
+    Item shopItems[] = {
+        {11, "Зелье лечения", 0, 10, 7},
+        {12, "Стальной кинжал", 5, 0, 15},
+        {13, "Святая вода", 0, 5, 7},
+    };
+    int shopCount = 3;
+
+    typePrintf(25, "\nТовары в наличии:\n");
+    for (int i = 0; i < shopCount; i++)
+    {
+        typePrintf(25, "%d. %s | %d GOLD |", i + 1, shopItems[i].name, shopItems[i].cost);
+
+        if (shopItems[i].attack)
+        {
+            typePrintf(25, " %+d ATK\n", shopItems[i].attack);
+        }
+        else if (shopItems[i].hp)
+        {
+            typePrintf(25, " %+d HP\n", shopItems[i].hp);
+        }
+        else
+        {
+            printf("\n");
+        }
+    }
+
+    typePrintf(25, "0. Назад\n> ");
+    int choice = getInt();
+
+    if (choice == 0)
+    {
+        typePrintf(25, "\nТорговец:\n- Заходи когда будет время.\n\n");
+        return;
+    }
+
+    if (choice < 1 || choice > shopCount)
+    {
+        typePrintf(25, "\nТорговец:\n- У меня нет такого предмета.\n\n");
+        return;
+    }
+
+    Item chosenItem = shopItems[choice - 1];
+
+    if (player->gold < chosenItem.cost)
+    {
+        typePrintf(25, "\nТорговец:\n- Недостаточно золота. Нужно еще %d монет.\n\n", chosenItem.cost - player->gold);
+        return;
+    }
+
+    player->gold -= chosenItem.cost;
+    addToInventory(&player->inventory, chosenItem);
+
+    typePrintf(25, "\nВы купили \"%s\". Осталось монет: %d \n\n", chosenItem.name, player->gold);
+}
+
+void openShoreChest(Player *player)
+{
+    static int isOpened = 0;
+
+    if (isOpened)
+    {
+        typePrintf(25, "\nСундук уже открыт!\n\n");
+        return;
+    }
+
+    typePrintf(25, "\nВы подходите к тяжелому сундуку, выброшенному прибоем на мокрый песок.\n");
+    typePrintf(25, "Крышка заперта кодовым замком из трех цифр.\n");
+    typePrintf(25, "Рядом нацарапана загадка:\n");
+    typePrintf(25, "«Первая цифра — число лун в ночном небе (1),\n"
+                   " вторая — сколько дорог ведет из деревни (2),\n"
+                   " третья — сколько вещей было в твоем кармане в начале пути (3)».\n\n");
+
+    typePrintf(25, "Введите трехначный код (0 - уйти): > ");
+    int choice = getInt();
+
+    if (choice == 0)
+    {
+        typePrintf(25, "\nВы решили пока не испытывать удачу.\n\n");
+        return;
+    }
+
+    if (choice == 123)
+    {
+        typePrintf(25, "\n*ЩЁЛК!* Старый латунный замок со скрипом поддается!\n");
+        typePrintf(25, "Крышка откидывается. Внутри блестят сокровища:\n");
+        typePrintf(25, "+15 золотых монет!\n");
+
+        player->gold += 15;
+        Item amulet = {21, "Морское кольцо", 0, 15, 30};
+        typePrintf(25, "\nВы также нашли старинное «%s» (+15 HP)!\n\n", amulet.name);
+
+        addToInventory(&player->inventory, amulet);
+        isOpened = 1;
+    }
+    else
+    {
+        typePrintf(25, "\nЗамок издал глухой скрежет... Код не подошел!\n\n");
+    }
 }
 
 /*
