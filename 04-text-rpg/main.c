@@ -15,6 +15,7 @@ typedef enum
     LOC_SHORE,
     LOC_VILLAGE,
     LOC_SHOP,
+    LOC_DARK_FOREST,
     LOC_COUNT,
 } LocationId;
 
@@ -25,6 +26,7 @@ typedef enum
     ACT_SHOP_BUY,
     ACT_REST_FIRE,
     ACT_SHORE_CHEST,
+    ACT_DARK_FOREST_FIGHT,
 } ActionId;
 
 typedef struct
@@ -52,12 +54,24 @@ typedef struct
 typedef struct
 {
     char name[MAX_LENGTH_NAME];
+    LocationId currentLocId;
     int hp;
     int max_hp;
     int attack;
     int gold;
     Inventory inventory;
 } Player;
+
+typedef struct
+{
+    char name[MAX_LENGTH_NAME];
+    int hp;
+    int max_hp;
+    int attack;
+    int goldReward;
+    Item dropItem;
+    int hasDrop;
+} Enemy;
 
 typedef struct
 {
@@ -107,6 +121,10 @@ void openShop(Player *player);
 
 void openShoreChest(Player *player);
 
+void handleBattle(Player *player);
+
+void startBattle(Player *player, Enemy *enemy);
+
 int main()
 {
     Location world[LOC_COUNT];
@@ -125,7 +143,6 @@ int main()
     typePrint("Введите имя героя: > ", 25);
     getString(player.name, MAX_LENGTH_NAME);
 
-    LocationId currentLocId = LOC_SHORE;
     int running = 1;
     int flag = running;
 
@@ -134,7 +151,7 @@ int main()
 
     while (flag)
     {
-        Location *loc = &world[currentLocId];
+        Location *loc = &world[player.currentLocId];
         running = 1;
 
         typePrintf(7, "\n----------------------------------------------------------------------\n");
@@ -178,13 +195,19 @@ int main()
             }
             else if (choice >= 1 && choice <= loc->exitsCount)
             {
-                currentLocId = loc->exits[choice - 1];
+                player.currentLocId = loc->exits[choice - 1];
                 running = 0;
             }
             else if (choice > loc->exitsCount && choice <= loc->exitsCount + loc->actionsCount)
             {
                 int actionIndex = choice - loc->exitsCount - 1;
+                LocationId oldLoc = player.currentLocId;
                 handleAction(&player, loc->actions[actionIndex].actionId);
+
+                if (player.currentLocId != oldLoc)
+                {
+                    running = 0;
+                }
             }
             else if (choice == invOption)
             {
@@ -329,6 +352,7 @@ int initPlayer(Player *player, const char *name)
     strncpy(player->name, name, MAX_LENGTH_NAME - 1);
     player->name[MAX_LENGTH_NAME - 1] = '\0';
 
+    player->currentLocId = LOC_SHORE;
     player->hp = 20;
     player->max_hp = 20;
     player->attack = 3;
@@ -382,9 +406,10 @@ void initWorld(Location world[])
     strcpy(world[LOC_VILLAGE].description,
            "В деревне вы видите много разных людей, сидящих молча\n"
            "возле главного центрального костра...");
-    world[LOC_VILLAGE].exitsCount = 2;
+    world[LOC_VILLAGE].exitsCount = 3;
     world[LOC_VILLAGE].exits[0] = LOC_SHORE;
     world[LOC_VILLAGE].exits[1] = LOC_SHOP;
+    world[LOC_VILLAGE].exits[2] = LOC_DARK_FOREST;
 
     // Действия для локации: Деревня
     world[LOC_VILLAGE].actionsCount = 1;
@@ -406,6 +431,22 @@ void initWorld(Location world[])
     strcpy(world[LOC_SHOP].actions[1].name, "Посмотреть товары");
     world[LOC_SHOP].actions[0].actionId = ACT_SHOP_ADVICE;
     world[LOC_SHOP].actions[1].actionId = ACT_SHOP_BUY;
+
+    // Локация: Темный лес
+    world[LOC_DARK_FOREST].id = LOC_DARK_FOREST;
+    strcpy(world[LOC_DARK_FOREST].name, "Темный лес");
+    strcpy(world[LOC_DARK_FOREST].description,
+           "Пробираясь через лощину густых елок вы попадаете\n"
+           "на еле освещенную лунным светом поляну.\n"
+           "Вдруг вы слышите треск веток позади себя...\n"
+           "Приглядевшись вы увидели страшного низкого гоблина с острым осколком бутылки в руке...");
+    world[LOC_DARK_FOREST].exitsCount = 1;
+    world[LOC_DARK_FOREST].exits[0] = LOC_VILLAGE;
+
+    // Действия для локации: Темный лес
+    world[LOC_DARK_FOREST].actionsCount = 1;
+    strcpy(world[LOC_DARK_FOREST].actions[0].name, "Сразиться с гоблином");
+    world[LOC_DARK_FOREST].actions[0].actionId = ACT_DARK_FOREST_FIGHT;
 }
 
 int getInt()
@@ -452,6 +493,9 @@ void handleAction(Player *player, ActionId act)
         break;
     case ACT_SHORE_CHEST:
         openShoreChest(player);
+        break;
+    case ACT_DARK_FOREST_FIGHT:
+        handleBattle(player);
         break;
     default:
         break;
@@ -601,6 +645,93 @@ void openShoreChest(Player *player)
     else
     {
         typePrintf(25, "\nЗамок издал глухой скрежет... Код не подошел!\n\n");
+    }
+}
+
+void handleBattle(Player *player)
+{
+
+    Enemy enemy = {"Гоблин", 10, 10, 3, 5, {311, "Осколок бутылки", 2, 0, 2}, 1};
+    startBattle(player, &enemy);
+}
+
+void startBattle(Player *player, Enemy *enemy)
+{
+    typePrintf(25, "\n==================================================\n");
+    typePrintf(25, "НАЧАЛСЯ БОЙ: %s VS %s!\n", player->name, enemy->name);
+    typePrintf(25, "==================================================\n");
+
+    while (player->hp > 0 && enemy->hp > 0)
+    {
+        typePrintf(25, "\nВаше здоровье: %d / %d | Враг: %s (%d / %d HP)\n",
+                   player->hp,
+                   player->max_hp,
+                   enemy->name,
+                   enemy->hp,
+                   enemy->max_hp);
+
+        typePrintf(25, "1. Ударить оружием (%d ATK)\n", player->attack);
+        typePrintf(25, "2. Открыть инвентарь\n");
+        typePrintf(25, "3. Попытаться сбежать\n> ");
+
+        int choice = getInt();
+
+        if (choice == 1)
+        {
+            enemy->hp -= player->attack;
+            typePrintf(25, "\nВы атакуете! %s получает %d урона.\n", enemy->name, player->attack);
+
+            if (enemy->hp <= 0)
+            {
+                typePrintf(25, "\nПОБЕДА! %s повержен!\n", enemy->name);
+                typePrintf(25, "Вы получили %d золотых монет!\n", enemy->goldReward);
+                player->gold += enemy->goldReward;
+
+                if (enemy->hasDrop)
+                {
+                    typePrintf(25, "С поверженного врага упал трофей: \"%s\"!\n\n", enemy->dropItem.name);
+                    addToInventory(&player->inventory, enemy->dropItem);
+                }
+
+                return;
+            }
+        }
+        else if (choice == 2)
+        {
+            openInventory(player);
+            continue;
+        }
+        else if (choice == 3)
+        {
+            if (rand() % 2 == 0)
+            {
+                typePrintf(25, "\nВы ловко увернулись и сбежали из боя!\n\n");
+                player->currentLocId = LOC_VILLAGE;
+                return;
+            }
+            else
+            {
+                typePrintf(25, "\nПобег не удался! Враг заблокировал дорогу!\n");
+            }
+        }
+        else
+        {
+            typePrintf(25, "\nВы замешкались...\n");
+        }
+
+        typePrintf(25, "%s свирепо атакует в ответ! Вы теряете %d HP.\n",
+                   enemy->name,
+                   enemy->attack);
+        player->hp -= enemy->attack;
+
+        if (player->hp <= 0)
+        {
+            typePrintf(25, "\nТьма сгущается перед глазами... Вас одолели в бою.\n");
+            typePrintf(25, "Вы очнулись возле тёплого костра в Деревне Угли (HP: 1/%d).\n\n", player->max_hp);
+            player->currentLocId = LOC_VILLAGE;
+            player->hp = 1;
+            return;
+        }
     }
 }
 
