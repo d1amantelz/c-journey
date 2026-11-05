@@ -15,6 +15,7 @@ typedef enum
     LOC_SHORE,
     LOC_VILLAGE,
     LOC_SHOP,
+    LOC_CRYPT,
     LOC_DARK_FOREST,
     LOC_COUNT,
 } LocationId;
@@ -26,6 +27,8 @@ typedef enum
     ACT_SHOP_BUY,
     ACT_REST_FIRE,
     ACT_SHORE_CHEST,
+    ACT_ENTER_CRYPT,
+    ACT_CRYPT_BOSS_FIGHT,
     ACT_DARK_FOREST_FIGHT,
 } ActionId;
 
@@ -57,6 +60,7 @@ typedef struct
     LocationId currentLocId;
     int hp;
     int max_hp;
+    int base_attack;
     int attack;
     int gold;
     Inventory inventory;
@@ -123,7 +127,13 @@ void openShoreChest(Player *player);
 
 void handleBattle(Player *player);
 
-void startBattle(Player *player, Enemy *enemy);
+int startBattle(Player *player, Enemy *enemy);
+
+int findItem(Inventory *inventory, const char *name);
+
+void enterCrypt(Player *player);
+
+void handleCryptBoss(Player *player);
 
 int main()
 {
@@ -316,7 +326,7 @@ void useItem(Player *player, int index)
 
     if (item.attack > 0)
     {
-        player->attack += item.attack;
+        player->attack = player->base_attack + item.attack;
 
         typePrintf(25, "\nВы экипировали: %s. ATK: %+d\n\n", item.name, item.attack);
     }
@@ -355,7 +365,8 @@ int initPlayer(Player *player, const char *name)
     player->currentLocId = LOC_SHORE;
     player->hp = 20;
     player->max_hp = 20;
-    player->attack = 3;
+    player->base_attack = 3;
+    player->attack = player->base_attack;
     player->gold = 10;
 
     player->inventory.numItems = 0;
@@ -444,9 +455,27 @@ void initWorld(Location world[])
     world[LOC_DARK_FOREST].exits[0] = LOC_VILLAGE;
 
     // Действия для локации: Темный лес
-    world[LOC_DARK_FOREST].actionsCount = 1;
+    world[LOC_DARK_FOREST].actionsCount = 2;
     strcpy(world[LOC_DARK_FOREST].actions[0].name, "Сразиться с гоблином");
+    strcpy(world[LOC_DARK_FOREST].actions[1].name, "Войти в склеп");
     world[LOC_DARK_FOREST].actions[0].actionId = ACT_DARK_FOREST_FIGHT;
+    world[LOC_DARK_FOREST].actions[1].actionId = ACT_ENTER_CRYPT;
+
+    // Локация: Склеп
+    world[LOC_CRYPT].id = LOC_CRYPT;
+    strcpy(world[LOC_CRYPT].name, "Заброшенный склеп");
+    strcpy(world[LOC_CRYPT].description,
+           "Леденящий сырой холод пробирает до костей.\n"
+           "В полумраке зала высится массивный каменный саркофаг,\n"
+           "покрытый древними рунами и трещинами. Воздух пахнет тленом и вековой пылью.\n"
+           "В глубине склепа слышится глухое бряцание тяжелых стальных лат...");
+    world[LOC_CRYPT].exitsCount = 1;
+    world[LOC_CRYPT].exits[0] = LOC_DARK_FOREST;
+
+    // Действия для локации: Склеп
+    world[LOC_CRYPT].actionsCount = 1;
+    strcpy(world[LOC_CRYPT].actions[0].name, "Бросить вызов Хранителю склепа");
+    world[LOC_CRYPT].actions[0].actionId = ACT_CRYPT_BOSS_FIGHT;
 }
 
 int getInt()
@@ -496,6 +525,12 @@ void handleAction(Player *player, ActionId act)
         break;
     case ACT_DARK_FOREST_FIGHT:
         handleBattle(player);
+        break;
+    case ACT_ENTER_CRYPT:
+        enterCrypt(player);
+        break;
+    case ACT_CRYPT_BOSS_FIGHT:
+        handleCryptBoss(player);
         break;
     default:
         break;
@@ -651,15 +686,15 @@ void openShoreChest(Player *player)
 void handleBattle(Player *player)
 {
 
-    Enemy enemy = {"Гоблин", 10, 10, 3, 5, {311, "Осколок бутылки", 2, 0, 2}, 1};
+    Enemy enemy = {"Гоблин", 10, 10, 3, 5, {311, "Ржавый ключ", 0, 0, 10}, 1};
     startBattle(player, &enemy);
 }
 
-void startBattle(Player *player, Enemy *enemy)
+int startBattle(Player *player, Enemy *enemy)
 {
-    typePrintf(25, "\n==================================================\n");
+    typePrintf(25, "\n======================================================================\n");
     typePrintf(25, "НАЧАЛСЯ БОЙ: %s VS %s!\n", player->name, enemy->name);
-    typePrintf(25, "==================================================\n");
+    typePrintf(25, "======================================================================\n");
 
     while (player->hp > 0 && enemy->hp > 0)
     {
@@ -693,7 +728,7 @@ void startBattle(Player *player, Enemy *enemy)
                     addToInventory(&player->inventory, enemy->dropItem);
                 }
 
-                return;
+                return 1;
             }
         }
         else if (choice == 2)
@@ -707,7 +742,7 @@ void startBattle(Player *player, Enemy *enemy)
             {
                 typePrintf(25, "\nВы ловко увернулись и сбежали из боя!\n\n");
                 player->currentLocId = LOC_VILLAGE;
-                return;
+                return 0;
             }
             else
             {
@@ -730,149 +765,66 @@ void startBattle(Player *player, Enemy *enemy)
             typePrintf(25, "Вы очнулись возле тёплого костра в Деревне Угли (HP: 1/%d).\n\n", player->max_hp);
             player->currentLocId = LOC_VILLAGE;
             player->hp = 1;
-            return;
+            return 0;
         }
+    }
+
+    return 0;
+}
+
+void handleCryptBoss(Player *player)
+{
+    static int isBossDefeated = 0;
+
+    if (isBossDefeated)
+    {
+        typePrintf(25, "\nСреди разломанных костей и старых лат царит мертвая тишина.\nХранитель склепа уже повержен.\n\n");
+        return;
+    }
+
+    Enemy boss = {"Хранитель склепа", 25, 25, 9, 30, {401, "Древний стальной меч", 8, 0, 50}, 1};
+    if (startBattle(player, &boss))
+    {
+        isBossDefeated = 1;
+        typePrintf(25, "Призрачный огонь в глазницах великана угас. Склеп очищен от древней тьмы!\n");
+        typePrintf(25, "\n* Ваша базовая атака повысилась с %d до %d *\n\n", player->base_attack, player->base_attack + 2);
+        player->base_attack += 2;
+        player->attack += 2;
     }
 }
 
-/*
+int findItem(Inventory *inventory, const char *name)
+{
+    for (int i = 0; i < inventory->numItems; i++)
+    {
+        if (strcmp(inventory->data[i].name, name) == 0)
+        {
+            return i;
+        }
+    }
 
-==================================================
-              ОТБЛЕСК ЛУННОГО СВЕТА
-                      v0.1
-==================================================
+    return -1;
+}
 
-Введите имя героя: > Ебло
+void enterCrypt(Player *player)
+{
+    static int isUnlocked = 0;
 
-Добро пожаловать, Ебло!
-Ты очнулся на берегу синего моря.
-Теплая волна омывает твои ноги.
-Ты медленно встаешь и рассматриваешь
-место вокруг...
+    if (!isUnlocked)
+    {
+        int keyIdx = findItem(&player->inventory, "Ржавый ключ");
+        if (keyIdx == -1)
+        {
+            typePrintf(25, "\nМассивная железная дверь опутана цепями и заперта на замок.\n");
+            typePrintf(25, "Замочная скважина покрыта мхом. Нужен подходящий ключ!\n\n");
+            return;
+        }
 
+        typePrintf(25, "\nВы вставляете Ржавый ключ в замок... Щелчок! Дверь склепа со скрипом поддается!\n");
+        removeFromInventory(&player->inventory, keyIdx);
+        isUnlocked = 1;
+    }
 
---------------------------------------------------
-Берег синего моря
-HP: 20/20   ATK: 3   GOLD: 10
---------------------------------------------------
-
-Вы видите бескрайний океан, который
-освещается яркой полной луной.
-На поясе у вас висит - ржавый кинжал.
-В стороне вы видите дым из труб,
-а также огонь костров. Видимо
-это Деревня...
-
-1. Идти в Деревня Угли
-2. Инвентарь
-> 2
-
-Инвентарь (3/10):
-  1. Ржавый кинжал  (+1 ATK)
-  2. Хлеб           (+3 HP)
-  3. Водка          (-1 HP | +1 ATK)
-
-1. Использовать
-2. Выбросить
-3. Назад
-> 1
-
-1. Ржавый кинжал
-2. Хлеб
-3. Водка
-4. Назад
-> 1
-
-Вы взяли в руку ржавый кинжал
-
-1. Ржавый кинжал
-2. Хлеб
-3. Водка
-4. Назад
-> 4
-
-Инвентарь (3/10):
-  1. Хлеб           (+3 HP)
-  2. Водка          (-1 HP | +1 ATK)
-
-1. Использовать
-2. Выбросить
-3. Назад
-> 3
-
-1. Идти в Деревня Угли
-2. Инвентарь
-> 1
-
-
---------------------------------------------------
-Деревня Угли
-HP: 20/20   ATK: 4   GOLD: 10
---------------------------------------------------
-
-В деревне вы видите много разных людей,
-начиная от детей заканчивая стариками,
-сидящими молча возле главного центрального
-костра...
-
-1. Идти в Лавка загадочного торговца
-2. Идти к Берег синего моря
-3. Инвентарь
-> 1
-
---------------------------------------------------
-Лавка загадочного торговца
-HP: 20/20   ATK: 4   GOLD: 10
---------------------------------------------------
-
-Зайдя в лавку, первое что вы увидели,
-это загадочный мужчина в капюшоне,
-который занимался игрой в шахматы сам
-с собой...
-
-- Здравствуй, незнакомый человек,
-  вижу ты у меня впервые. Ты хочешь
-  совершить покупку или попросить
-  совета?
-
-1. Зелье лечения        (+10 HP) - 8 GOLD
-2. Серебряный кинжал    (+5 ATK) - 10 GOLD
-3. Попросить совета
-4. Уйти
-> 3
-
-- Знаешь, путник. Не советовал бы я
-  тебе находиться здесь днем. Мало ли
-  еще не знаешь. А так хоть живым останешься...
-
-1. Зелье лечения        (+10 HP) - 8 GOLD
-2. Серебряный кинжал    (+5 ATK) - 10 GOLD
-3. Попросить совета
-4. Уйти
-> 1
-
-Куплено: Зелье лечения. Осталось GOLD: 2.
-
-1. Зелье лечения        (+10 HP) - 8 GOLD
-2. Серебряный кинжал    (+5 ATK) - 10 GOLD
-3. Попросить совета
-4. Уйти
-> 4
-
---------------------------------------------------
-Деревня Угли
-HP: 20/20   ATK: 4   GOLD: 10
---------------------------------------------------
-
-Подойдя ближе к деревне вы видите
-много разных людей, начиная от детей
-заканчивая стариками, сидящими
-молча возле главного центрального костра...
-
-1. Идти к Лавка загадочного торговца
-2. Идти к Берег синего моря
-3. Инвентарь
->
-
-
-*/
+    typePrintf(25, "Вы спускаетесь по замшелым каменным ступеням в темноту склепа...\n\n");
+    player->currentLocId = LOC_CRYPT;
+}
