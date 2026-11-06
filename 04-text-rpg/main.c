@@ -1,3 +1,5 @@
+// Version 1.1.0 - Skeleton Crypt Cleared (Marathon Day 3)
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -557,7 +559,7 @@ void typePrintf(int delayMs, const char *format, ...)
     vsnprintf(buffer, sizeof(buffer), format, args);
     va_end(args);
 
-    typePrint(buffer, 1);
+    typePrint(buffer, delayMs);
 }
 
 void sleepMs(int ms)
