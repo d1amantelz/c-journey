@@ -30,11 +30,13 @@
 * Fixed/dynamic inventory buffer with strict string-safe bounds.
 * **Item Consumption & Deletion:** Using memory shifting `memmove` / array compacting to remove used items (`Зелье лечения`) without leaving holes or leaking memory.
 * **Equipment System:** Distinguishing consumable items from weapons (`Ржавый меч`, `Стальной меч`). Equipping a weapon dynamically recalculates total player attack:
-  $$\text{Total Attack} = \text{base\_attack} + \text{equipped\_weapon\_bonus}$$
+  ```c
+  total_attack = base_attack + weapon_attack_bonus;
+  ```
 
 ### 3. Economy & Shop Trading (NPC)
 * Merchant inventory with gold verification.
-* Atomic purchase transactions: validating player gold balance $\implies$ deducting cost $\implies$ pushing item into inventory.
+* Atomic purchase transactions: validating player gold balance → deducting cost → pushing item into inventory.
 
 ### 4. Turn-Based Combat Loop
 * Enemy structure: `name`, `hp`, `maxHp`, `attack`, `goldReward`.
