@@ -49,6 +49,13 @@
 ### 5. Typewriter Atmospheric Text Engine (`typePrintf`)
 * Formatted string output with variable arguments via `<stdarg.h>` (`va_list`, `va_start`, `va_end`) and microsecond delays (`usleep`), creating a retro text-quest aesthetic with auto-flush (`fflush(stdout)`).
 
+### 6. Persistence & Serialization (`Save / Load`)
+* Custom structured text format (`save.txt`) storing full game state across sessions:
+  * **Player stats:** name, location ID, HP, Max HP, base attack, total attack, gold.
+  * **World & Quest progress:** persistent state flags (`chestOpened`, `cryptUnlocked`, `bossDefeated`).
+  * **Dynamic inventory heap:** dynamically serialized and deserialized with string-safe scansets (`%95[^|]`) and memory reallocation (`malloc` / `free`).
+* Auto-save on graceful exit, in-game manual save, and start menu load with fallback to New Game.
+
 ---
 
 ## 🛠️ Build & Run
@@ -62,6 +69,7 @@ gcc -Wall -Wextra main.c -o main
 ---
 
 ## 📦 Version History
+* **v1.2.0** — Added persistent Save/Load system (`save.txt`), quest flags persistence, and dynamic inventory deserialization.
 * **v1.1.0** — Added locked crypt location, skeleton crypt boss fight, and permanent base attack scaling reward.
 * **v1.0.0** — Added turn-based combat system, Goblin enemy, and Dark Forest.
 * **v0.3.0** — Added NPC merchant shop and shoreline chest riddle.

@@ -1,4 +1,4 @@
-// Version 1.1.0 - Skeleton Crypt Cleared (Marathon Day 3)
+// Version 1.2.0 - Save & Load System (Marathon Day 4)
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,6 +11,13 @@
 #define MAX_EXITS 4
 #define MAX_ACTIONS 5
 #define MAX_BUFFER_SIZE 512
+
+typedef struct
+{
+    int chestOpened;
+    int cryptUnlocked;
+    int bossDefeated;
+} Quests;
 
 typedef enum
 {
@@ -66,6 +73,7 @@ typedef struct
     int attack;
     int gold;
     Inventory inventory;
+    Quests quests;
 } Player;
 
 typedef struct
@@ -137,6 +145,10 @@ void enterCrypt(Player *player);
 
 void handleCryptBoss(Player *player);
 
+void saveGame(Player *player);
+
+int loadGame(Player *player);
+
 int main()
 {
     Location world[LOC_COUNT];
@@ -147,19 +159,42 @@ int main()
     typePrintf(7, "======================================================================\n\n");
 
     Player player;
-    if (!initPlayer(&player, "Герой"))
-    {
-        return 1;
-    }
-
-    typePrint("Введите имя героя: > ", 25);
-    getString(player.name, MAX_LENGTH_NAME);
+    player.inventory.data = NULL;
 
     int running = 1;
     int flag = running;
 
-    typePrintf(20, "\nДобро пожаловать, %s!\nТы очнулся на берегу синего моря.\n", player.name);
-    typePrintf(20, "Теплая волна омывает твои ноги.\nТы медленно встаешь и рассматриваешь\nместо вокруг...\n");
+    typePrintf(25, "\n1. Новая игра\n2. Загрузить игру\n> ");
+    int choice = getInt();
+    int isLoaded = 0;
+
+    if (choice == 2)
+    {
+        if (loadGame(&player))
+        {
+            isLoaded = 1;
+            typePrintf(20, "\nС возвращением в игру, %s!\n", player.name);
+        }
+        else
+        {
+            typePrintf(20, "\nСохранение не найдено! Начинаем новую игру...\n");
+        }
+    }
+
+    if (!isLoaded)
+    {
+        char heroName[MAX_LENGTH_NAME];
+        typePrint("\nВведите имя героя: > ", 25);
+        getString(heroName, MAX_LENGTH_NAME);
+
+        if (!initPlayer(&player, heroName))
+        {
+            return 1;
+        }
+
+        typePrintf(20, "\nДобро пожаловать, %s!\nТы очнулся на берегу синего моря.\n", player.name);
+        typePrintf(20, "Теплая волна омывает твои ноги.\nТы медленно встаешь и рассматриваешь\nместо вокруг...\n");
+    }
 
     while (flag)
     {
@@ -192,9 +227,11 @@ int main()
             }
 
             int invOption = option++;
+            int saveOption = option++;
 
             // Печать системных действий
             typePrintf(20, "%d. Открыть инвентарь\n", invOption);
+            typePrintf(20, "%d. Сохранить игру\n", saveOption);
             typePrintf(20, "0. Выход из игры\n> ");
 
             int choice = getInt();
@@ -204,6 +241,7 @@ int main()
                 typePrintf(20, "\nВы легли отдохнуть на землю. До встречи!\n");
                 running = 0;
                 flag = 0;
+                saveGame(&player);
             }
             else if (choice >= 1 && choice <= loc->exitsCount)
             {
@@ -224,6 +262,10 @@ int main()
             else if (choice == invOption)
             {
                 openInventory(&player);
+            }
+            else if (choice == saveOption)
+            {
+                saveGame(&player);
             }
             else
             {
@@ -374,6 +416,10 @@ int initPlayer(Player *player, const char *name)
     player->inventory.numItems = 0;
     player->inventory.size = 10;
     player->inventory.data = malloc(player->inventory.size * sizeof(Item));
+
+    player->quests.bossDefeated = 0;
+    player->quests.chestOpened = 0;
+    player->quests.cryptUnlocked = 0;
 
     if (player->inventory.data == NULL)
     {
@@ -541,11 +587,12 @@ void handleAction(Player *player, ActionId act)
 
 void typePrint(const char *text, int delayMs)
 {
+    (void)delayMs;
     while (*text)
     {
         putchar(*text);
         fflush(stdout);
-        usleep(delayMs * 1000);
+        usleep(3 * 1000);
         text++;
     }
 }
@@ -642,9 +689,8 @@ void openShop(Player *player)
 
 void openShoreChest(Player *player)
 {
-    static int isOpened = 0;
 
-    if (isOpened)
+    if (player->quests.chestOpened)
     {
         typePrintf(25, "\nСундук уже открыт!\n\n");
         return;
@@ -677,7 +723,7 @@ void openShoreChest(Player *player)
         typePrintf(25, "\nВы также нашли старинное «%s» (+15 HP)!\n\n", amulet.name);
 
         addToInventory(&player->inventory, amulet);
-        isOpened = 1;
+        player->quests.chestOpened = 1;
     }
     else
     {
@@ -776,9 +822,7 @@ int startBattle(Player *player, Enemy *enemy)
 
 void handleCryptBoss(Player *player)
 {
-    static int isBossDefeated = 0;
-
-    if (isBossDefeated)
+    if (player->quests.bossDefeated)
     {
         typePrintf(25, "\nСреди разломанных костей и старых лат царит мертвая тишина.\nХранитель склепа уже повержен.\n\n");
         return;
@@ -787,7 +831,7 @@ void handleCryptBoss(Player *player)
     Enemy boss = {"Хранитель склепа", 25, 25, 9, 30, {401, "Древний стальной меч", 8, 0, 50}, 1};
     if (startBattle(player, &boss))
     {
-        isBossDefeated = 1;
+        player->quests.bossDefeated = 1;
         typePrintf(25, "Призрачный огонь в глазницах великана угас. Склеп очищен от древней тьмы!\n");
         typePrintf(25, "\n* Ваша базовая атака повысилась с %d до %d *\n\n", player->base_attack, player->base_attack + 2);
         player->base_attack += 2;
@@ -810,9 +854,7 @@ int findItem(Inventory *inventory, const char *name)
 
 void enterCrypt(Player *player)
 {
-    static int isUnlocked = 0;
-
-    if (!isUnlocked)
+    if (!player->quests.cryptUnlocked)
     {
         int keyIdx = findItem(&player->inventory, "Ржавый ключ");
         if (keyIdx == -1)
@@ -824,9 +866,142 @@ void enterCrypt(Player *player)
 
         typePrintf(25, "\nВы вставляете Ржавый ключ в замок... Щелчок! Дверь склепа со скрипом поддается!\n");
         removeFromInventory(&player->inventory, keyIdx);
-        isUnlocked = 1;
+        player->quests.cryptUnlocked = 1;
     }
 
     typePrintf(25, "Вы спускаетесь по замшелым каменным ступеням в темноту склепа...\n\n");
     player->currentLocId = LOC_CRYPT;
+}
+
+void saveGame(Player *player)
+{
+    FILE *file = fopen("save.txt", "w");
+
+    if (file == NULL)
+    {
+        typePrintf(20, "\nОшибка: не удалось создать файл сохранения save.txt!\n\n");
+        return;
+    }
+
+    fprintf(file, "[PLAYER]\n");
+    fprintf(file, "name=%s\n", player->name);
+    fprintf(file, "loc=%d\n", player->currentLocId);
+    fprintf(file, "hp=%d\n", player->hp);
+    fprintf(file, "max_hp=%d\n", player->max_hp);
+    fprintf(file, "base_attack=%d\n", player->base_attack);
+    fprintf(file, "attack=%d\n", player->attack);
+    fprintf(file, "gold=%d\n", player->gold);
+
+    fprintf(file, "[QUESTS]\n");
+    fprintf(file, "chest=%d\n", player->quests.chestOpened);
+    fprintf(file, "crypt=%d\n", player->quests.cryptUnlocked);
+    fprintf(file, "boss=%d\n", player->quests.bossDefeated);
+
+    fprintf(file, "[INVENTORY]\n");
+    fprintf(file, "count=%d\n", player->inventory.numItems);
+    for (int i = 0; i < player->inventory.numItems; i++)
+    {
+        Item *item = &player->inventory.data[i];
+        fprintf(file, "%d|%s|%d|%d|%d\n", item->id, item->name, item->attack, item->hp, item->cost);
+    }
+
+    fclose(file);
+    typePrintf(20, "\n* Игра успешно сохранена в save.txt! *\n\n");
+}
+
+int loadGame(Player *player)
+{
+    FILE *file = fopen("save.txt", "r");
+
+    if (file == NULL)
+    {
+        return 0;
+    }
+
+    char line[MAX_BUFFER_SIZE];
+
+    if (player->inventory.data != NULL)
+    {
+        free(player->inventory.data);
+        player->inventory.data = NULL;
+    }
+
+    while (fgets(line, sizeof(line), file))
+    {
+        if (strncmp(line, "name=", 5) == 0)
+        {
+            sscanf(line + 5, "%95[^\r\n]", player->name);
+        }
+        else if (strncmp(line, "loc=", 4) == 0)
+        {
+            int loc = 0;
+            sscanf(line + 4, "%d", &loc);
+            player->currentLocId = (LocationId)loc;
+        }
+        else if (strncmp(line, "hp=", 3) == 0)
+        {
+            sscanf(line + 3, "%d", &player->hp);
+        }
+        else if (strncmp(line, "max_hp=", 7) == 0)
+        {
+            sscanf(line + 7, "%d", &player->max_hp);
+        }
+        else if (strncmp(line, "base_attack=", 12) == 0)
+        {
+            sscanf(line + 12, "%d", &player->base_attack);
+        }
+        else if (strncmp(line, "attack=", 7) == 0)
+        {
+            sscanf(line + 7, "%d", &player->attack);
+        }
+        else if (strncmp(line, "gold=", 5) == 0)
+        {
+            sscanf(line + 5, "%d", &player->gold);
+        }
+
+        else if (strncmp(line, "chest=", 6) == 0)
+        {
+            sscanf(line + 6, "%d", &player->quests.chestOpened);
+        }
+        else if (strncmp(line, "crypt=", 6) == 0)
+        {
+            sscanf(line + 6, "%d", &player->quests.cryptUnlocked);
+        }
+        else if (strncmp(line, "boss=", 5) == 0)
+        {
+            sscanf(line + 5, "%d", &player->quests.bossDefeated);
+        }
+
+        else if (strncmp(line, "count=", 6) == 0)
+        {
+            int count = 0;
+            sscanf(line + 6, "%d", &count);
+
+            player->inventory.numItems = 0;
+            player->inventory.size = (count > 10) ? count + 5 : 10;
+            player->inventory.data = malloc(player->inventory.size * sizeof(Item));
+
+            if (player->inventory.data == NULL)
+            {
+                printf("\nОшибка выделения памяти при загрузке инвентаря!\n");
+                fclose(file);
+                return 0;
+            }
+
+            for (int i = 0; i < count; i++)
+            {
+                if (fgets(line, sizeof(line), file))
+                {
+                    Item item;
+                    if (sscanf(line, "%d|%95[^|]|%d|%d|%d", &item.id, item.name, &item.attack, &item.hp, &item.cost) == 5)
+                    {
+                        player->inventory.data[player->inventory.numItems++] = item;
+                    }
+                }
+            }
+        }
+    }
+
+    fclose(file);
+    return 1;
 }
