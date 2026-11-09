@@ -62,13 +62,21 @@
 
 ```bash
 cd 04-text-rpg
-gcc -Wall -Wextra main.c -o main
-./main
+
+# Собрать проект с помощью Makefile
+make
+
+# Собрать и сразу запустить игру
+make run
+
+# Очистить бинарники
+make clean
 ```
 
 ---
 
 ## 📦 Version History
+* **v2.0.0** — Major Architectural Overhaul: Decomposed 1000-line monolith into dedicated translation modules (`types.h`, `utils`, `inventory`, `combat`, `world`, `save`), introduced `Makefile` build automation, ANSI terminal color styling, and dynamic HP bars.
 * **v1.2.0** — Added persistent Save/Load system (`save.txt`), quest flags persistence, and dynamic inventory deserialization.
 * **v1.1.0** — Added locked crypt location, skeleton crypt boss fight, and permanent base attack scaling reward.
 * **v1.0.0** — Added turn-based combat system, Goblin enemy, and Dark Forest.
