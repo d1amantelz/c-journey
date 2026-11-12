@@ -28,13 +28,13 @@ void addToInventory(Inventory *inventory, Item item)
 
 void showInventory(const Inventory *inventory)
 {
-    printf("\nИнвентарь (%d/%d):\n",
+    printf("\n🎒 Инвентарь (%d/%d):\n",
            inventory->numItems, inventory->size);
 
     for (int i = 0; i < inventory->numItems; i++)
     {
         Item item = inventory->data[i];
-        typePrintf(20, "  %d. %s", i + 1, item.name);
+        typePrintf(20, "  %d. %s %s", i + 1, item.icon, item.name);
 
         int nameLength = utf8Len(item.name);
 
@@ -68,7 +68,7 @@ void openInventory(Player *player)
         return;
     }
 
-    typePrintf(25, "\n1. Использовать\n2. Назад\n> ");
+    typePrintf(25, "\n1. ✨ Использовать\n2. " COLOR_GREEN "<─" COLOR_RESET " Назад\n> ");
 
     int choice = getInt();
 
@@ -99,7 +99,7 @@ void useItem(Player *player, int index)
     {
         player->attack = player->base_attack + item.attack;
 
-        typePrintf(25, "\nВы экипировали: %s. ATK: %+d\n\n", item.name, item.attack);
+        typePrintf(25, "\nВы экипировали: %s %s. ATK: %+d\n\n", item.icon, item.name, item.attack);
     }
     else if (item.hp != 0)
     {
@@ -117,11 +117,11 @@ void useItem(Player *player, int index)
 
         if (item.hp > 0)
         {
-            typePrintf(25, "\nВы употребили \"%s\" (%+d HP). HP: %d / %d\n", item.name, item.hp, player->hp, player->max_hp);
+            typePrintf(25, "\nВы употребили \"%s %s\" (%+d HP). HP: %d / %d\n\n", item.icon, item.name, item.hp, player->hp, player->max_hp);
         }
         else
         {
-            typePrintf(25, "\nВы употребили \"%s\". Вам поплохело (%d HP). HP: %d / %d\n", item.name, item.hp, player->hp, player->max_hp);
+            typePrintf(25, "\nВы употребили \"%s %s\". Вам поплохело (%d HP). HP: %d / %d\n\n", item.icon, item.name, item.hp, player->hp, player->max_hp);
         }
 
         removeFromInventory(&player->inventory, index);

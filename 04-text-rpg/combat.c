@@ -7,22 +7,23 @@
 void handleBattle(Player *player)
 {
 
-    Enemy enemy = {"Гоблин", 10, 10, 3, 5, {311, "Ржавый ключ", 0, 0, 10}, 1};
+    Enemy enemy = {"Гоблин", 10, 10, 3, 5, {311, "🗝️ ", "Ржавый ключ", 0, 0, 10}, 1};
     startBattle(player, &enemy);
 }
 
 int startBattle(Player *player, Enemy *enemy)
 {
-    typePrintf(25, COLOR_RED "\nНАЧАЛСЯ БОЙ" COLOR_RESET ": %s VS %s!\n", player->name, enemy->name);
+    typePrintf(7, COLOR_GRAY "\n======================================================================\n" COLOR_RESET);
+    typePrintf(25, COLOR_RED "\nНАЧАЛСЯ БОЙ" COLOR_RESET ": " COLOR_MAGENTA "%s" COLOR_RESET " VS " COLOR_GREEN "%s" COLOR_RESET "!\n", player->name, enemy->name);
 
-    char playerBar[32];
-    char enemyBar[32];
+    char playerBar[128];
+    char enemyBar[128];
 
     while (player->hp > 0 && enemy->hp > 0)
     {
         getHpBar(playerBar, player->hp, player->max_hp, 10);
         getHpBar(enemyBar, enemy->hp, enemy->max_hp, 10);
-        typePrintf(25, "\n%s: " COLOR_RED "%s" COLOR_RESET " %d/%d HP\n%s: " COLOR_RED "%s" COLOR_RESET " %d/%d HP\n\n",
+        typePrintf(25, "\n" COLOR_MAGENTA "%s" COLOR_RESET ": " COLOR_RED "%s" COLOR_RESET " " COLOR_RED "%d" COLOR_RESET "/" COLOR_RED "%d" COLOR_RESET " HP\n" COLOR_GREEN "%s" COLOR_RESET ": " COLOR_RED "%s" COLOR_RESET " " COLOR_RED "%d" COLOR_RESET "/" COLOR_RED "%d" COLOR_RESET " HP\n\n",
                    player->name,
                    playerBar,
                    player->hp,
@@ -32,26 +33,27 @@ int startBattle(Player *player, Enemy *enemy)
                    enemy->hp,
                    enemy->max_hp);
 
-        typePrintf(25, "1. Ударить оружием (%d ATK)\n", player->attack);
-        typePrintf(25, "2. Открыть инвентарь\n");
-        typePrintf(25, "3. Попытаться сбежать\n> ");
+        typePrintf(25, "1. ⚔️  Ударить оружием\n", player->attack);
+        typePrintf(25, "2. 🎒 Открыть инвентарь\n");
+        typePrintf(25, "3. 🏃 Попытаться сбежать\n> ");
 
         int choice = getInt();
 
         if (choice == 1)
         {
             enemy->hp -= player->attack;
-            typePrintf(25, "\nВы атакуете! %s получает %d урона.\n", enemy->name, player->attack);
+            typePrintf(25, "\n⚔️  Вы атакуете! %s получает %d урона.\n", enemy->name, player->attack);
 
             if (enemy->hp <= 0)
             {
+                typePrintf(7, COLOR_GRAY "\n======================================================================\n" COLOR_RESET);
                 typePrintf(25, COLOR_GREEN "\nПОБЕДА" COLOR_RESET "! %s повержен!\n", enemy->name);
-                typePrintf(25, COLOR_YELLOW "\n+%d золотых монет!\n" COLOR_RESET, enemy->goldReward);
+                typePrintf(25, "\n🪙" COLOR_YELLOW "  +%d" COLOR_RESET " золотых монет!\n", enemy->goldReward);
                 player->gold += enemy->goldReward;
 
                 if (enemy->hasDrop)
                 {
-                    typePrintf(25, "С поверженного врага упал трофей: \"%s\"!\n\n", enemy->dropItem.name);
+                    typePrintf(25, "🎁 С поверженного врага упал трофей: \"%s\"!\n\n", enemy->dropItem.name);
                     addToInventory(&player->inventory, enemy->dropItem);
                 }
 
@@ -67,7 +69,7 @@ int startBattle(Player *player, Enemy *enemy)
         {
             if (rand() % 2 == 0)
             {
-                typePrintf(25, "\nВы ловко увернулись и сбежали из боя!\n\n");
+                typePrintf(25, "\nВы ловко увернулись и сбежали из боя!\n");
                 player->currentLocId = LOC_VILLAGE;
                 return 0;
             }
@@ -107,7 +109,7 @@ void handleCryptBoss(Player *player)
         return;
     }
 
-    Enemy boss = {"Хранитель склепа", 25, 25, 9, 30, {401, "Древний стальной меч", 8, 0, 50}, 1};
+    Enemy boss = {"Хранитель склепа", 25, 25, 9, 30, {401, "⚔️ ", "Древний стальной меч", 8, 0, 50}, 1};
     if (startBattle(player, &boss))
     {
         player->quests.bossDefeated = 1;

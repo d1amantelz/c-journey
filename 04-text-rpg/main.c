@@ -8,8 +8,6 @@
 // 7. Подсветка врагов и игрока
 // 8. Вывод специальных подписей ("Ваша базовая атака...", "Игра сохранена", "Вы легли отдохнуть..." и т.д.)
 
-// TODO:  Решить нужно ли добавлять смайлы-эмодзи в игру для вовлеченности и красоты
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -25,9 +23,9 @@ int main()
     Location world[LOC_COUNT];
     initWorld(world);
 
-    typePrintf(7, "\n======================================================================\n");
-    typePrintf(7, "                ОТБЛЕСК ЛУННОГО СВЕТА: НАЧАЛО ПУТИ\n");
-    typePrintf(7, "======================================================================\n\n");
+    typePrintf(7, COLOR_GRAY "\n======================================================================\n" COLOR_RESET);
+    typePrintf(7, "               🌙 " COLOR_CYAN "ОТБЛЕСК ЛУННОГО СВЕТА: НАЧАЛО ПУТИ" COLOR_RESET " 🌙\n");
+    typePrintf(7, COLOR_GRAY "======================================================================\n\n" COLOR_RESET);
 
     Player player;
     player.inventory.data = NULL;
@@ -35,7 +33,7 @@ int main()
     int running = 1;
     int flag = running;
 
-    typePrintf(25, "\n1. Новая игра\n2. Загрузить игру\n> ");
+    typePrintf(25, "\n1. 📜 Новая игра\n2. 💾 Загрузить игру\n> ");
     int choice = getInt();
     int isLoaded = 0;
 
@@ -44,7 +42,7 @@ int main()
         if (loadGame(&player))
         {
             isLoaded = 1;
-            typePrintf(20, "\nС возвращением в игру, %s!\n", player.name);
+            typePrintf(20, "\nС возвращением в игру, " COLOR_MAGENTA "%s" COLOR_RESET "!\n", player.name);
         }
         else
         {
@@ -63,7 +61,7 @@ int main()
             return 1;
         }
 
-        typePrintf(20, "\nДобро пожаловать, %s!\nТы очнулся на берегу синего моря.\n", player.name);
+        typePrintf(20, "\nДобро пожаловать, " COLOR_MAGENTA "%s" COLOR_RESET "!\nТы очнулся на берегу синего моря.\n", player.name);
         typePrintf(20, "Теплая волна омывает твои ноги.\nТы медленно встаешь и рассматриваешь\nместо вокруг...\n");
     }
 
@@ -71,12 +69,12 @@ int main()
     {
         Location *loc = &world[player.currentLocId];
         running = 1;
-        char hpBar[32];
+        char hpBar[128];
         getHpBar(hpBar, player.hp, player.max_hp, 10);
 
         typePrintf(7, COLOR_GRAY "\n----------------------------------------------------------------------\n" COLOR_RESET);
-        typePrintf(7, COLOR_CYAN "%s" COLOR_RESET " \nHP: " COLOR_RED "%s %d/%d" COLOR_RESET " | ATK: %d | GOLD: " COLOR_YELLOW "%d" COLOR_RESET "\n",
-                   loc->name, hpBar, player.hp, player.max_hp, player.attack, player.gold);
+        typePrintf(7, "%s " COLOR_CYAN "%s" COLOR_RESET " \n❤️  HP: " COLOR_RED "%s " COLOR_RED "%d" COLOR_RESET "/" COLOR_RED "%d" COLOR_RESET " | ⚔️  ATK: " COLOR_BLUE "%d" COLOR_RESET " | 🪙  GOLD: " COLOR_YELLOW "%d" COLOR_RESET "\n",
+                   loc->icon, loc->name, hpBar, player.hp, player.max_hp, player.attack, player.gold);
         typePrintf(7, COLOR_GRAY "----------------------------------------------------------------------\n" COLOR_RESET);
 
         typePrintf(20, "\n%s\n\n", loc->description);
@@ -90,28 +88,28 @@ int main()
             for (int i = 0; i < loc->exitsCount; i++)
             {
                 LocationId targetId = loc->exits[i];
-                typePrintf(20, "%d. Идти в: %s\n", option++, world[targetId].name);
+                typePrintf(20, "%d. " COLOR_GREEN "─>" COLOR_RESET" %s %s\n", option++, world[targetId].name, world[targetId].icon);
             }
 
             // Печать действия текущей локации
             for (int i = 0; i < loc->actionsCount; i++)
             {
-                typePrintf(20, "%d. %s\n", option++, loc->actions[i].name);
+                typePrintf(20, "%d. %s %s\n", option++, loc->actions[i].icon, loc->actions[i].name);
             }
 
             int invOption = option++;
             int saveOption = option++;
 
             // Печать системных действий
-            typePrintf(20, "%d. Открыть инвентарь\n", invOption);
-            typePrintf(20, "%d. Сохранить игру\n", saveOption);
-            typePrintf(20, "0. Выход из игры\n> ");
+            typePrintf(20, "%d. 🎒 Открыть инвентарь \n", invOption);
+            typePrintf(20, "%d. 💾 Сохранить игру \n", saveOption);
+            typePrintf(20, "0. 🚪 Выход из игры\n> ");
 
             int choice = getInt();
 
             if (choice == 0)
             {
-                typePrintf(20, "\nВы легли отдохнуть на землю. До встречи!\n");
+                typePrintf(20, "\n🌙 Вы легли отдохнуть на землю. До встречи!\n");
                 running = 0;
                 flag = 0;
                 saveGame(&player);

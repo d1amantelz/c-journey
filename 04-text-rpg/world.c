@@ -33,9 +33,9 @@ int initPlayer(Player *player, const char *name)
         return 0;
     }
 
-    Item dagger = {1, "Ржавый кинжал", 1, 0, 3};
-    Item bread = {2, "Хлеб", 0, 3, 2};
-    Item vodka = {3, "Водка", 0, -1, 4};
+    Item dagger = {1, "🗡️ ", "Ржавый кинжал", 1, 0, 3};
+    Item bread = {2, "🥖", "Хлеб", 0, 3, 2};
+    Item vodka = {3, "🍶", "Водка", 0, -1, 4};
 
     addToInventory(&player->inventory, dagger);
     addToInventory(&player->inventory, bread);
@@ -57,8 +57,8 @@ void initWorld(Location world[])
     world[LOC_SHORE].id = LOC_SHORE;
     strcpy(world[LOC_SHORE].name, "Берег синего моря");
     strcpy(world[LOC_SHORE].description,
-           "Вы видите бескрайний океан, освещенный яркой полной луной.\n"
-           "В стороне виден дым из труб и огонь костров. Видимо, это Деревня...");
+           COLOR_GRAY "Вы видите бескрайний океан, освещенный яркой полной луной.\n"
+                      "В стороне виден дым из труб и огонь костров. Видимо, это Деревня..." COLOR_RESET);
     world[LOC_SHORE].exitsCount = 1;
     world[LOC_SHORE].exits[0] = LOC_VILLAGE;
     world[LOC_SHORE].actionsCount = 1;
@@ -69,8 +69,8 @@ void initWorld(Location world[])
     world[LOC_VILLAGE].id = LOC_VILLAGE;
     strcpy(world[LOC_VILLAGE].name, "Деревня Угли");
     strcpy(world[LOC_VILLAGE].description,
-           "В деревне вы видите много разных людей, сидящих молча\n"
-           "возле главного центрального костра...");
+           COLOR_GRAY "В деревне вы видите много разных людей, сидящих молча\n"
+                      "возле главного центрального костра..." COLOR_RESET);
     world[LOC_VILLAGE].exitsCount = 3;
     world[LOC_VILLAGE].exits[0] = LOC_SHORE;
     world[LOC_VILLAGE].exits[1] = LOC_SHOP;
@@ -85,8 +85,8 @@ void initWorld(Location world[])
     world[LOC_SHOP].id = LOC_SHOP;
     strcpy(world[LOC_SHOP].name, "Лавка загадочного торговца");
     strcpy(world[LOC_SHOP].description,
-           "Зайдя в лавку, первое что вы увидели — это загадочный мужчина\n"
-           "в капюшоне, играющий в шахматы сам с собой...");
+           COLOR_GRAY "Зайдя в лавку, первое что вы увидели — это загадочный мужчина\n"
+                      "в капюшоне, играющий в шахматы сам с собой..." COLOR_RESET);
     world[LOC_SHOP].exitsCount = 1;
     world[LOC_SHOP].exits[0] = LOC_VILLAGE;
 
@@ -101,10 +101,10 @@ void initWorld(Location world[])
     world[LOC_DARK_FOREST].id = LOC_DARK_FOREST;
     strcpy(world[LOC_DARK_FOREST].name, "Темный лес");
     strcpy(world[LOC_DARK_FOREST].description,
-           "Пробираясь через лощину густых елок вы попадаете\n"
-           "на еле освещенную лунным светом поляну.\n"
-           "Вдруг вы слышите треск веток позади себя...\n"
-           "Приглядевшись вы увидели страшного низкого гоблина с острым осколком бутылки в руке...");
+           COLOR_GRAY "Пробираясь через лощину густых елок вы попадаете\n"
+                      "на еле освещенную лунным светом поляну.\n"
+                      "Вдруг вы слышите треск веток позади себя...\n"
+                      "Приглядевшись вы увидели страшного низкого гоблина с острым осколком бутылки в руке..." COLOR_RESET);
     world[LOC_DARK_FOREST].exitsCount = 1;
     world[LOC_DARK_FOREST].exits[0] = LOC_VILLAGE;
 
@@ -119,10 +119,10 @@ void initWorld(Location world[])
     world[LOC_CRYPT].id = LOC_CRYPT;
     strcpy(world[LOC_CRYPT].name, "Заброшенный склеп");
     strcpy(world[LOC_CRYPT].description,
-           "Леденящий сырой холод пробирает до костей.\n"
-           "В полумраке зала высится массивный каменный саркофаг,\n"
-           "покрытый древними рунами и трещинами. Воздух пахнет тленом и вековой пылью.\n"
-           "В глубине склепа слышится глухое бряцание тяжелых стальных лат...");
+           COLOR_GRAY "Леденящий сырой холод пробирает до костей.\n"
+                      "В полумраке зала высится массивный каменный саркофаг,\n"
+                      "покрытый древними рунами и трещинами. Воздух пахнет тленом и вековой пылью.\n"
+                      "В глубине склепа слышится глухое бряцание тяжелых стальных лат..." COLOR_RESET);
     world[LOC_CRYPT].exitsCount = 1;
     world[LOC_CRYPT].exits[0] = LOC_DARK_FOREST;
 
@@ -130,6 +130,20 @@ void initWorld(Location world[])
     world[LOC_CRYPT].actionsCount = 1;
     strcpy(world[LOC_CRYPT].actions[0].name, "Бросить вызов Хранителю склепа");
     world[LOC_CRYPT].actions[0].actionId = ACT_CRYPT_BOSS_FIGHT;
+
+    world[LOC_SHORE].icon = "🌊";
+    world[LOC_VILLAGE].icon = "🔥";
+    world[LOC_SHOP].icon = "🛒";
+    world[LOC_DARK_FOREST].icon = "🌲";
+    world[LOC_CRYPT].icon = "🏛️ ";
+
+    world[LOC_SHORE].actions[0].icon = "📦";
+    world[LOC_VILLAGE].actions[0].icon = "🔥";
+    world[LOC_SHOP].actions[0].icon = "💬";
+    world[LOC_SHOP].actions[1].icon = "🛒";
+    world[LOC_DARK_FOREST].actions[0].icon = "⚔️ ";
+    world[LOC_DARK_FOREST].actions[1].icon = "🗝️ ";
+    world[LOC_CRYPT].actions[0].icon = "💀";
 }
 
 void handleAction(Player *player, ActionId act)
@@ -141,7 +155,7 @@ void handleAction(Player *player, ActionId act)
         typePrintf(20, "\nТорговец:\n- Знаешь, путник... Не советовал бы я тебе бродить здесь ночью.\n\n");
         break;
     case ACT_REST_FIRE:
-        typePrintf(20, "\nВы греетесь у костра. Тепло разливается по телу (+5 HP).\n\n");
+        typePrintf(20, "\n🏕️  Вы греетесь у костра. Тепло разливается по телу: " COLOR_RED "+5 ❤️ \n\n" COLOR_RESET);
         player->hp = (player->hp + 5 > player->max_hp) ? player->max_hp : player->hp + 5;
         break;
     case ACT_SHOP_BUY:
@@ -166,26 +180,24 @@ void handleAction(Player *player, ActionId act)
 
 void openShop(Player *player)
 {
-    // предметы для торговли. id, name, attack, hp, cost
     Item shopItems[] = {
-        {11, "Зелье лечения", 0, 10, 7},
-        {12, "Стальной кинжал", 5, 0, 15},
-        {13, "Святая вода", 0, 5, 7},
+        {11, "🧪", "Зелье лечения", 0, 10, 7},
+        {12, "🗡️ ", "Стальной кинжал", 5, 0, 15},
+        {13, "💧", "Святая вода", 0, 5, 7},
     };
     int shopCount = 3;
 
     typePrintf(25, "\nТовары в наличии:\n");
     for (int i = 0; i < shopCount; i++)
     {
-        typePrintf(25, "%d. %s | %d GOLD |", i + 1, shopItems[i].name, shopItems[i].cost);
-
+        typePrintf(25, "%d. %s %s · " COLOR_YELLOW "%d 🪙  GOLD · " COLOR_RESET, i + 1, shopItems[i].icon, shopItems[i].name, shopItems[i].cost);
         if (shopItems[i].attack)
         {
-            typePrintf(25, " %+d ATK\n", shopItems[i].attack);
+            typePrintf(25, COLOR_BLUE "%+d ⚔️  ATK\n" COLOR_RESET, shopItems[i].attack);
         }
         else if (shopItems[i].hp)
         {
-            typePrintf(25, " %+d HP\n", shopItems[i].hp);
+            typePrintf(25, COLOR_RED "%+d ❤️  HP\n" COLOR_RESET, shopItems[i].hp);
         }
         else
         {
@@ -193,7 +205,7 @@ void openShop(Player *player)
         }
     }
 
-    typePrintf(25, "0. Назад\n> ");
+    typePrintf(25, "0. " COLOR_GREEN "<─" COLOR_RESET "  Назад\n> ");
     int choice = getInt();
 
     if (choice == 0)
@@ -254,7 +266,7 @@ void openShoreChest(Player *player)
         typePrintf(25, COLOR_YELLOW "\n+15 золотых монет!\n" COLOR_RESET);
 
         player->gold += 15;
-        Item amulet = {21, "Морское кольцо", 0, 15, 30};
+        Item amulet = {21, "💍", "Морское кольцо", 0, 15, 30};
         typePrintf(25, "\nВы также нашли старинное «%s» (+15 HP)!\n\n", amulet.name);
 
         addToInventory(&player->inventory, amulet);

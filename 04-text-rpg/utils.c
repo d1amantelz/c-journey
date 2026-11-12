@@ -93,17 +93,20 @@ void getHpBar(char *buffer, int current, int max, int barLength)
     }
 
     int idx = 0;
-    buffer[idx++] = '[';
+
+    idx += sprintf(buffer + idx, "%s[%s", COLOR_GRAY, COLOR_RED);
+
     for (int i = 0; i < filled; i++)
     {
-        buffer[idx++] = '#';
+        idx += sprintf(buffer + idx, "■");
     }
+
+    idx += sprintf(buffer + idx, "%s", COLOR_GRAY);
 
     for (int i = filled; i < barLength; i++)
     {
-        buffer[idx++] = '-';
+        idx += sprintf(buffer + idx, "·");
     }
 
-    buffer[idx++] = ']';
-    buffer[idx++] = '\0';
+    idx += sprintf(buffer + idx, "]%s", COLOR_RESET);
 }

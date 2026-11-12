@@ -34,11 +34,11 @@ void saveGame(Player *player)
     for (int i = 0; i < player->inventory.numItems; i++)
     {
         Item *item = &player->inventory.data[i];
-        fprintf(file, "%d|%s|%d|%d|%d\n", item->id, item->name, item->attack, item->hp, item->cost);
+        fprintf(file, "%d|%s|%s|%d|%d|%d\n", item->id, item->icon, item->name, item->attack, item->hp, item->cost);
     }
 
     fclose(file);
-    typePrintf(20, "\n* Игра успешно сохранена в save.txt! *\n\n");
+    typePrintf(20, "\n💾 Игра успешно сохранена в " COLOR_GREEN "save.txt" COLOR_RESET "!\n\n");
 }
 
 int loadGame(Player *player)
@@ -125,7 +125,7 @@ int loadGame(Player *player)
                 if (fgets(line, sizeof(line), file))
                 {
                     Item item;
-                    if (sscanf(line, "%d|%95[^|]|%d|%d|%d", &item.id, item.name, &item.attack, &item.hp, &item.cost) == 5)
+                    if (sscanf(line, "%d|%15[^|]|%95[^|]|%d|%d|%d", &item.id, item.icon, item.name, &item.attack, &item.hp, &item.cost) == 6)
                     {
                         player->inventory.data[player->inventory.numItems++] = item;
                     }

@@ -37,6 +37,7 @@ typedef enum
 
 typedef struct
 {
+    const char *icon;
     char name[MAX_LENGTH_NAME];
     ActionId actionId;
 } Action;
@@ -44,6 +45,7 @@ typedef struct
 typedef struct
 {
     int id;
+    char icon[16];
     char name[MAX_LENGTH_NAME];
     int attack;
     int hp;
@@ -84,6 +86,7 @@ typedef struct
 typedef struct
 {
     LocationId id;
+    const char *icon;
     char name[MAX_LENGTH_NAME];
     char description[MAX_DESC_LEN];
 
