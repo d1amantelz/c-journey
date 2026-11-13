@@ -152,7 +152,8 @@ void handleAction(Player *player, ActionId act)
     switch (act)
     {
     case ACT_SHOP_ADVICE:
-        typePrintf(20, "\nТорговец:\n- Знаешь, путник... Не советовал бы я тебе бродить здесь ночью.\n\n");
+        printMerchantPhrases(player);
+        // typePrintf(20, "\nТорговец:\n- Знаешь, путник... Не советовал бы я тебе бродить здесь ночью.\n\n");
         break;
     case ACT_REST_FIRE:
         typePrintf(20, "\n🏕️  Вы греетесь у костра. Тепло разливается по телу: " COLOR_RED "+5 ❤️ \n\n" COLOR_RESET);
@@ -263,7 +264,7 @@ void openShoreChest(Player *player)
     {
         typePrintf(25, "\n*ЩЁЛК!* Старый латунный замок со скрипом поддается!\n");
         typePrintf(25, "Крышка откидывается. Внутри блестят сокровища:\n");
-        typePrintf(25, COLOR_YELLOW "\n+15 золотых монет!\n" COLOR_RESET);
+        typePrintf(25, COLOR_YELLOW "\n🪙  +15 золотых монет!\n" COLOR_RESET);
 
         player->gold += 15;
         Item amulet = {21, "💍", "Морское кольцо", 0, 15, 30};
@@ -297,4 +298,20 @@ void enterCrypt(Player *player)
 
     typePrintf(25, "\nВы спускаетесь по замшелым каменным ступеням в темноту склепа...\n");
     player->currentLocId = LOC_CRYPT;
+}
+
+void printMerchantPhrases(Player *player)
+{
+    if (player->quests.bossDefeated)
+    {
+        typePrintf(25, "\n" COLOR_GREEN "Торговец" COLOR_RESET ":\n— Невероятно! Ты одолел Хранителя склепа?! Во тьме снова засиял лунный свет... Деревня в долгу перед тобой, " COLOR_MAGENTA "%s" COLOR_RESET "!\n\n", player->name);
+    }
+    else if (player->quests.cryptUnlocked || findItem(&player->inventory, "Ржавый ключ") != -1)
+    {
+        typePrintf(25, "\n" COLOR_GREEN "Торговец" COLOR_RESET ":\n— Вижу, ты подобрался к тайнам склепа... Не суйся туда без хорошего оружия и пары зелий, путник!\n\n");
+    }
+    else
+    {
+        typePrintf(25, "\n" COLOR_GREEN "Торговец" COLOR_RESET ":\n— В Тёмном лесу шныряет гоблин... Местные говорят, он стащил ключ от древнего склепа.\n\n");
+    }
 }

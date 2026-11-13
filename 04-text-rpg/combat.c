@@ -41,19 +41,36 @@ int startBattle(Player *player, Enemy *enemy)
 
         if (choice == 1)
         {
-            enemy->hp -= player->attack;
-            typePrintf(25, "\n⚔️  Вы атакуете! %s получает %d урона.\n", enemy->name, player->attack);
+            int damage = player->attack;
+            int isCrit = (rand() % 100 < 20);
+            if (isCrit)
+            {
+                damage = (int)(damage * 1.5);
+                if (damage <= player->attack)
+                {
+                    damage = player->attack + 1;
+                }
+                typePrintf(25, "\n⚡ " COLOR_YELLOW "КРИТИЧЕСКИЙ УДАР!" COLOR_RESET " " COLOR_MAGENTA "%s" COLOR_RESET " наносит сокрушительные " COLOR_RED "%d урона" COLOR_RESET " по " COLOR_GREEN "%s" COLOR_RESET "!\n",
+                           player->name, damage, enemy->name);
+            }
+            else
+            {
+                typePrintf(25, "\n⚔️  " COLOR_MAGENTA "%s" COLOR_RESET " атакует! " COLOR_GREEN "%s" COLOR_RESET " получает " COLOR_RED "%d урона" COLOR_RESET ".\n",
+                           player->name, enemy->name, damage);
+            }
+            enemy->hp -= damage;
 
             if (enemy->hp <= 0)
             {
                 typePrintf(7, COLOR_GRAY "\n======================================================================\n" COLOR_RESET);
-                typePrintf(25, COLOR_GREEN "\nПОБЕДА" COLOR_RESET "! %s повержен!\n", enemy->name);
-                typePrintf(25, "\n🪙" COLOR_YELLOW "  +%d" COLOR_RESET " золотых монет!\n", enemy->goldReward);
+                typePrintf(25, COLOR_GREEN "\nПОБЕДА" COLOR_RESET "! " COLOR_GREEN "%s" COLOR_RESET " повержен!\n", enemy->name);
+                typePrintf(25, "\n🪙" COLOR_YELLOW "  +%d золотых монет" COLOR_RESET "!\n", enemy->goldReward);
                 player->gold += enemy->goldReward;
 
                 if (enemy->hasDrop)
                 {
-                    typePrintf(25, "🎁 С поверженного врага упал трофей: \"%s\"!\n\n", enemy->dropItem.name);
+                    typePrintf(25, "🎁 С поверженного врага упал трофей: " COLOR_YELLOW "%s %s" COLOR_RESET "!\n\n",
+                               enemy->dropItem.icon, enemy->dropItem.name);
                     addToInventory(&player->inventory, enemy->dropItem);
                 }
 
@@ -83,10 +100,16 @@ int startBattle(Player *player, Enemy *enemy)
             typePrintf(25, "\nВы замешкались...\n");
         }
 
-        typePrintf(25, "%s свирепо атакует в ответ! Вы теряете %d HP.\n",
-                   enemy->name,
-                   enemy->attack);
-        player->hp -= enemy->attack;
+        if (rand() % 100 < 15)
+        {
+            typePrintf(25, "\n💨 " COLOR_GREEN "%s" COLOR_RESET " свирепо замахнулся, но вы ловко уклонились от удара!\n", enemy->name);
+        }
+        else
+        {
+            typePrintf(25, "\n💥 " COLOR_GREEN "%s" COLOR_RESET " атакует в ответ! Вы теряете " COLOR_RED "%d HP" COLOR_RESET ".\n",
+                       enemy->name, enemy->attack);
+            player->hp -= enemy->attack;
+        }
 
         if (player->hp <= 0)
         {

@@ -14,3 +14,5 @@ void openShop(Player *player);
 void openShoreChest(Player *player);
 
 void enterCrypt(Player *player);
+
+void printMerchantPhrases(Player *player);

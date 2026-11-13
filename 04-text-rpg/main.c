@@ -1,13 +1,3 @@
-// TODO: добавить новые цвета, а также покрасить следующие выводы:
-// 1. Трофеев с врагов
-// 2. Пунктов меню (подсветка локаций, врагов)
-// 3. Улучшить вывод боя
-// 4. Описание локаций
-// 5. Атаки
-// 6. Начало игры ("Отблеск...")
-// 7. Подсветка врагов и игрока
-// 8. Вывод специальных подписей ("Ваша базовая атака...", "Игра сохранена", "Вы легли отдохнуть..." и т.д.)
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,9 +7,11 @@
 #include "combat.h"
 #include "world.h"
 #include "save.h"
+#include <time.h>
 
 int main()
 {
+    srand(time(NULL));
     Location world[LOC_COUNT];
     initWorld(world);
 
@@ -88,7 +80,7 @@ int main()
             for (int i = 0; i < loc->exitsCount; i++)
             {
                 LocationId targetId = loc->exits[i];
-                typePrintf(20, "%d. " COLOR_GREEN "─>" COLOR_RESET" %s %s\n", option++, world[targetId].name, world[targetId].icon);
+                typePrintf(20, "%d. " COLOR_GREEN "─>" COLOR_RESET " %s %s\n", option++, world[targetId].name, world[targetId].icon);
             }
 
             // Печать действия текущей локации

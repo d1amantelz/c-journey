@@ -97,3 +97,4 @@ typedef struct
     int actionsCount;
 
 } Location;
+

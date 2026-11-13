@@ -76,6 +76,7 @@ make clean
 ---
 
 ## 📦 Version History
+* **v2.1.0** — Release & Final Polish: Added critical hit variance ($1.5\times$ damage) and enemy evasion mechanics (`rand()`), contextual dynamic merchant dialogue based on quest progress, full Unicode item & location iconography, custom ANSI HP bar with middle-dot styling, and safe stack buffer expansions.
 * **v2.0.0** — Major Architectural Overhaul: Decomposed 1000-line monolith into dedicated translation modules (`types.h`, `utils`, `inventory`, `combat`, `world`, `save`), introduced `Makefile` build automation, ANSI terminal color styling, and dynamic HP bars.
 * **v1.2.0** — Added persistent Save/Load system (`save.txt`), quest flags persistence, and dynamic inventory deserialization.
 * **v1.1.0** — Added locked crypt location, skeleton crypt boss fight, and permanent base attack scaling reward.

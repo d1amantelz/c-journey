@@ -11,7 +11,7 @@
 | `01` | [**CLI To-Do List**](./01-todo-list) | Fixed-size 2D arrays, strings (`fgets`, `strcspn`), CLI state loop, pass-by-pointer | ✅ Completed |
 | `02` | [**CLI Phonebook**](./02-phonebook) | Structures (`struct`), record search by substring (`strstr`), record deletion & memory shifting | ✅ Completed |
 | `03` | [**CLI Expense Tracker**](./03-expense-tracker) | Dynamic arrays on heap (`malloc`, safe `realloc(temp)`, `free`), `enum` categories, CSV tokenizer (`strtok`), Snapshot State Dump persistence | ✅ Completed |
-| `04` | [**Text RPG: Moonlit Echoes**](./04-text-rpg) | Finite State Machine (FSM), dynamic player inventory on heap (`malloc`/`realloc`), modular architecture (`.h`/`.c`), formatted item bonuses | 🚧 In Progress |
+| `04` | [**Text RPG: Moonlit Echoes**](./04-text-rpg) | Finite State Machine (FSM), dynamic player inventory on heap (`malloc`/`realloc`), modular 6-module architecture (`.h`/`.c` + `Makefile`), custom serialization (`Save/Load`), turn-based combat with crits & RNG evasion, ANSI color UI | ✅ Completed |
 
 ---
 
