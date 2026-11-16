@@ -211,13 +211,13 @@ void openShop(Player *player)
 
     if (choice == 0)
     {
-        typePrintf(25, "\nТорговец:\n- Заходи когда будет время.\n\n");
+        typePrintf(25, "\n" COLOR_GREEN "Торговец" COLOR_RESET ":\n- Заходи когда будет время.\n\n");
         return;
     }
 
     if (choice < 1 || choice > shopCount)
     {
-        typePrintf(25, "\nТорговец:\n- У меня нет такого предмета.\n\n");
+        typePrintf(25, "\n" COLOR_GREEN "Торговец" COLOR_RESET ":\n- У меня нет такого предмета.\n\n");
         return;
     }
 
